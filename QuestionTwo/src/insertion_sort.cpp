@@ -5,12 +5,10 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <string>
-#include <random>
 #include <iomanip>
-#include <ctime>
-#include <map>
 
 using namespace std;
 
@@ -22,25 +20,39 @@ struct Driver {
 long long comparisons = 0;
 long long assignments = 0;
 
-// Pool for generating driver data
-const vector<string> DRIVERS = {
-    "VER", "HAD", "RUS", "ANT", "LEC", "HAM", "HUL", "BOR",
-    "PER", "BOT", "GAS", "COL", "OCO", "BEA", "SAI", "ALB",
-    "ALO", "STR", "NOR", "PIA", "LAW", "LIN"
-};
+/// @brief Load all data from CSV file
+vector<Driver> loadAllData(const string& filename) {
+    vector<Driver> allData;
+    ifstream file(filename);
+    string line;
+    
+    // Skip header
+    getline(file, line);
+    
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string name;
+        double lapTime;
+        
+        getline(ss, name, ',');
+        ss >> lapTime;
+        
+        allData.push_back({name, lapTime});
+    }
+    
+    return allData;
+}
 
-/// @brief Generate random dataset from pool with attempt numbers
-vector<Driver> generateData(int n, mt19937& rng) {
-    vector<Driver> data(n);
-    uniform_real_distribution<double> dist(77.0, 93.0);
-    map<string, int> attemptCount;  // Track attempts per driver
+/// @brief Get a subset of data for a specific n and dataset number
+vector<Driver> getData(const vector<Driver>& allData, int n, int datasetNum) {
+    vector<Driver> data;
+    int startIdx = ((datasetNum - 1) * n) % allData.size();
     
     for (int i = 0; i < n; i++) {
-        string driverCode = DRIVERS[rng() % DRIVERS.size()];
-        attemptCount[driverCode]++;  // Increment attempt count
-        data[i].name = driverCode + " (Lap " + to_string(attemptCount[driverCode]) + ")";
-        data[i].lapTime = dist(rng);
+        int idx = (startIdx + i) % allData.size();
+        data.push_back(allData[idx]);
     }
+    
     return data;
 }
 
@@ -61,9 +73,10 @@ void sortByLapTime(vector<Driver>& data) {
 }
 
 int main() {
-    mt19937 rng(time(nullptr));
-    
     const int DATASETS = 10;
+    
+    // Load all data from CSV
+    vector<Driver> allData = loadAllData("../q1_data.csv");
     
     // Open output files
     ofstream fLapTime("../results/sort_by_laptime.csv");
@@ -83,11 +96,11 @@ int main() {
         cout << "n = " << setw(3) << n << ": ";
         
         for (int d = 0; d < DATASETS; d++) {
-            vector<Driver> original = generateData(n, rng);
+            vector<Driver> original = getData(allData, n, d + 1);
             
             // Save dataset
             ofstream fData("../data/qualifying_n" + to_string(n) + "_d" + to_string(d+1) + ".csv");
-            fData << "Name,LapTime\n";
+            fData << "driver,q1\n";
             for (auto& r : original)
                 fData << r.name << "," << fixed << setprecision(3) << r.lapTime << "\n";
             
@@ -103,7 +116,7 @@ int main() {
             
             // Save sorted data
             ofstream fSorted("../results/sorted_by_laptime_n" + to_string(n) + "_d" + to_string(d+1) + ".csv");
-            fSorted << "Position,Name,LapTime\n";
+            fSorted << "Position,driver,q1\n";
             for (size_t i = 0; i < data.size(); i++)
                 fSorted << (i + 1) << "," << data[i].name << "," << fixed << setprecision(3) << data[i].lapTime << "\n";
             
