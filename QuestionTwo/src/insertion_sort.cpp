@@ -1,6 +1,11 @@
 /**
  * @file insertion_sort.cpp
  * @brief Insertion Sort on F1 Qualifying (Driver, LapTime) records with comparison counting
+ * 
+ * @dataset Source: Kaggle - F1 Qualifying Times (2014-2024)
+ *          URL: https://www.kaggle.com/datasets/kartikag234/f1-qualifying-times2014-2024
+ *          - 500 rows extracted from the original dataset
+ *          - Only 2 columns used: Driver (name) and Q1 (qualifying lap time in seconds)
  */
 
 #include <iostream>
