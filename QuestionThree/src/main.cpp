@@ -459,6 +459,94 @@ void bankCustomerSorting() {
 }
 
 // ============================================================================
+// OPTION 3: Bank Customer Data Sorting with Sampling
+// ============================================================================
+
+/**
+ * @brief Samples data from the main bank dataset.
+ * @param allCustomers The vector of all customers.
+ * @param n The number of records to sample.
+ * @param rng The random number generator.
+ * @return A vector of sampled Customer records.
+ */
+vector<Customer> sampleBankData(const vector<Customer>& allCustomers, int n, mt19937& rng) {
+    vector<Customer> sampledData;
+    if (allCustomers.empty() || n == 0) {
+        return sampledData;
+    }
+    
+    uniform_int_distribution<size_t> dist(0, allCustomers.size() - 1);
+    
+    for (int i = 0; i < n; ++i) {
+        sampledData.push_back(allCustomers[dist(rng)]);
+    }
+    
+    return sampledData;
+}
+
+/**
+ * @brief Runs sorting on sampled bank customer data.
+ * @details Loads the full bank dataset, then for various sizes `n`, it creates
+ * multiple sampled datasets, sorts them by salary, and saves the results.
+ */
+void bankCustomerSamplingSorting() {
+    string main_dataset_path = "../bank_dataset.csv";
+    vector<Customer> allCustomers = loadBankData(main_dataset_path);
+
+    if (allCustomers.empty()) {
+        cout << "\nError: Could not load main bank customer data from " << main_dataset_path << endl;
+        return;
+    }
+
+    mt19937 rng(time(nullptr));
+    const int DATASETS = 10;
+
+    cout << "\nBank Customer Data Sorting (with Sampling)\n";
+    cout << "===========================================\n\n";
+
+    for (int n = 10; n <= 100; n += 10) {
+        cout << "n = " << setw(3) << n << ": ";
+        for (int d = 0; d < DATASETS; d++) {
+            // Sample data
+            vector<Customer> sampledData = sampleBankData(allCustomers, n, rng);
+
+            // Save unsorted sample
+            string unsorted_filename = "../data/bank_sampled_n" + to_string(n) + "_d" + to_string(d+1) + ".csv";
+            ofstream funsorted(unsorted_filename);
+            funsorted << "customer_id,credit_score,country,gender,age,tenure,balance,products_number,credit_card,active_member,estimated_salary,churn\n";
+            for (const auto& c : sampledData) {
+                funsorted << c.id << "," << c.score << "," << c.country << "," << c.gender << ","
+                         << c.age << "," << c.tenure << "," << c.balance << "," << c.products << ","
+                         << c.card << "," << c.active << "," << fixed << setprecision(2) << c.salary << ","
+                         << c.churn << "\n";
+            }
+            funsorted.close();
+
+            // Sort the sampled data
+            mergeSortBySalary(sampledData, 0, sampledData.size() - 1);
+
+            // Save sorted sample
+            string sorted_filename = "../results/sorted_bank_sampled_n" + to_string(n) + "_d" + to_string(d+1) + ".csv";
+            ofstream fsorted(sorted_filename);
+            fsorted << "customer_id,credit_score,country,gender,age,tenure,balance,products_number,credit_card,active_member,estimated_salary,churn\n";
+            for (const auto& c : sampledData) {
+                fsorted << c.id << "," << c.score << "," << c.country << "," << c.gender << ","
+                       << c.age << "," << c.tenure << "," << c.balance << "," << c.products << ","
+                       << c.card << "," << c.active << "," << fixed << setprecision(2) << c.salary << ","
+                       << c.churn << "\n";
+            }
+            fsorted.close();
+
+            cout << ".";
+        }
+        cout << " Done.\n";
+    }
+
+    cout << "\nSuccess! Sampled, sorted data saved to ../results/ and ../data/ directories.\n";
+}
+
+
+// ============================================================================
 // MAIN MENU
 // ============================================================================
 
@@ -475,10 +563,12 @@ void displayMenu() {
     cout << "\n";
     cout << "  2. Bank Customer Data Sorting(Sorts customer records by estimated salary)\n";  
     cout << "\n";
-    cout << "  3. Exit\n";
+    cout << "  3. Bank Customer Data Sorting with Sampling\n";
+    cout << "\n";
+    cout << "  4. Exit\n";
     cout << "\n";
     cout << "----------------------------------------------------------\n";
-    cout << "Enter your choice (1-3): ";
+    cout << "Enter your choice (1-4): ";
 }
 
 /**
@@ -509,11 +599,17 @@ int main() {
                 break;
                 
             case 3:
+                bankCustomerSamplingSorting();
+                cout << "\nPress Enter to continue...";
+                cin.get();
+                break;
+
+            case 4:
                 cout << "\nExited!\n";
                 return 0;
                 
             default:
-                cout << "\nInvalid choice! Please select 1-3.\n";
+                cout << "\nInvalid choice! Please select 1-4.\n";
         }
     }
     
